@@ -1,0 +1,4 @@
+[tools]
+maven = '3.9'
+java = 'corretto-21'  # temurin is currently causing issues
+
