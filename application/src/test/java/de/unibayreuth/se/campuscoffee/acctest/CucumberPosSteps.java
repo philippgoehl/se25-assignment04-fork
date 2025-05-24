@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 
 import static de.unibayreuth.se.campuscoffee.TestUtil.*;
-import static de.unibayreuth.se.campuscoffee.TestUtil.configurePostgresContainers;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -96,6 +95,31 @@ public class CucumberPosSteps {
         assertThat(createdPosList).size().isEqualTo(posList.size());
     }
 
+    @When("I update the description of the POS named {string} to {string}")
+    public void i_update_the_description_of_the_pos_named_to(String name, String newDescription) {
+        PosDto existing = retrievePosByName(name);
+
+        // since PosDto is immutable and doesn’t provide a setDescription(...) method,
+        // we create a new instance using its builder with the updated description        
+        PosDto toUpdate = PosDto.builder()
+            .id(existing.getId())
+            .name(existing.getName())
+            .description(newDescription)      
+            .type(existing.getType())
+            .campus(existing.getCampus())
+            .street(existing.getStreet())
+            .houseNumber(existing.getHouseNumber())
+            .postalCode(existing.getPostalCode())
+            .city(existing.getCity())
+            .build();
+
+        PosDto updatedPos = updatePos(List.of(toUpdate)).get(0);
+
+        assertThat(updatedPos.getDescription())
+            .as("Returned DTO should contain the updated description")
+            .isEqualTo(newDescription);
+    }
+
     // Then -----------------------------------------------------------------------
 
     @Then("the POS list should contain the same elements in the same order")
@@ -104,5 +128,13 @@ public class CucumberPosSteps {
         assertThat(retrievedPosList)
                 .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "createdAt", "updatedAt")
                 .containsExactlyInAnyOrderElementsOf(createdPosList);
+    }
+
+    @Then("the POS with name {string} should have description {string}")
+    public void the_pos_with_name_should_have_description(String name, String expectedDescription) {
+        PosDto actual = retrievePosByName(name);
+        assertThat(actual.getDescription())
+            .as("Persisted POS description should match the expected description")
+            .isEqualTo(expectedDescription);
     }
 }
